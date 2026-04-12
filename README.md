@@ -1,13 +1,18 @@
 # opencode-cmux
 
-[![npm](https://img.shields.io/npm/v/opencode-cmux)](https://www.npmjs.com/package/opencode-cmux)
+OpenCode plugin that mirrors a small set of OpenCode events into cmux.
 
-OpenCode plugin that bridges OpenCode events to cmux notifications and sidebar metadata.
+It is intentionally narrow in scope:
+
+- Sets a single cmux sidebar status for OpenCode activity
+- Sends desktop notifications for completions, errors, permissions, and questions
+- Writes matching entries to the cmux log
+- Does nothing outside a cmux workspace
 
 ## Requirements
 
 - OpenCode ≥ 1.0
-- [cmux](https://cmux.app) (macOS app) installed with CLI accessible at `/usr/local/bin/cmux`
+- [cmux](https://cmux.app) installed and `cmux` available on your `PATH`
 - The plugin is a no-op when not running inside a cmux workspace
 
 ## Installation
@@ -16,7 +21,7 @@ Add to `~/.config/opencode/opencode.json`:
 
 ```json
 {
-  "plugin": ["opencode-cmux"]
+  "plugin": ["github:zharinov/opencode-cmux"]
 }
 ```
 
@@ -24,38 +29,36 @@ OpenCode will download the package automatically on next start.
 
 ### Local / development
 
-Build the package, then symlink the output directly into OpenCode's plugin directory:
+Symlink the source entry directly into OpenCode's plugin directory:
 
 ```bash
-ln -sf ~/path/to/opencode-cmux/dist/index.js ~/.config/opencode/plugins/cmux.js
+ln -sf ~/path/to/opencode-cmux/index.ts ~/.config/opencode/plugins/cmux.js
 ```
 
 Make sure `opencode-cmux` is **not** listed in `opencode.json` when using the symlink, to avoid loading it twice.
 
-## Subagent splits
-
-When a subagent spawns, the plugin opens a cmux split with a live `opencode attach` view. Requires `--port` to expose an HTTP server:
-
-```bash
-opencode --port 0  # binds to first available port
-```
-
-Without `--port`, splits are silently skipped.
-
 ## What it does
 
-| Event | cmux action |
-|---|---|
-| Session starts working | Sidebar status: "working" (amber, terminal icon) |
-| Session completes (primary) | Desktop notification + log + clear status |
-| Session completes (subagent) | Log only (no notification spam) |
-| Session error | Desktop notification + log + clear status |
-| Permission requested | Desktop notification + sidebar status: "waiting" (red, lock icon) |
-| AI has a question (`ask` tool) | Desktop notification + sidebar status: "question" (purple) |
+| Event                           | cmux                                    |
+| ------------------------------- | --------------------------------------- |
+| Session starts working          | Status `working` (amber, terminal)      |
+| Top-level session completes     | Notify, success log, clear status       |
+| Session error                   | Notify, error log, clear status         |
+| Permission requested            | Notify, status `waiting` (red, lock)    |
+| AI asks a question              | Notify, status `question` (purple)      |
+| Permission or question answered | Back to `working` if nothing is pending |
+
+## What it does not do
+
+- It does not create or manage cmux splits, panes, or layouts.
+- It does not run `opencode attach`.
+- It does not require `opencode --port` or talk to OpenCode over HTTP.
+- It does not emit completion notifications for subagent sessions.
+- It does not fail the OpenCode run if `cmux` is missing or a cmux command errors; all cmux integration is best-effort.
 
 ## How it works
 
-The plugin responds to OpenCode lifecycle events by firing cmux CLI commands (`cmux notify`, `cmux set-status`, etc.). Each action targets the current cmux workspace, providing ambient awareness of what OpenCode is doing without requiring you to switch context. All commands are no-ops when cmux is not running.
+The plugin listens to OpenCode lifecycle, permission, and question events, then shells out to `cmux notify`, `cmux set-status`, `cmux clear-status`, and `cmux log`. It keeps only one status key (`opencode`) updated in the current cmux workspace. If the process is not running inside cmux, or if a cmux command fails, the plugin silently skips the action.
 
 ## License
 

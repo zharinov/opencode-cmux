@@ -4,21 +4,12 @@
   "version": "0.2.2",
   "description": "OpenCode plugin that bridges OpenCode events to cmux notifications and sidebar metadata",
   "type": "module",
-  "main": "dist/index.js",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "types": "dist/index.d.ts",
+  "main": "index.ts",
   "files": [
-    "dist"
+    "index.ts"
   ],
   "scripts": {
-    "build": "tsc --emitDeclarationOnly && bun build src/index.ts --outdir dist --target node",
-    "typecheck": "tsc --noEmit",
-    "prepublishOnly": "bun run typecheck && bun run build"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "opencode",
@@ -29,11 +20,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/0xCaso/opencode-cmux.git"
+    "url": "git+https://github.com/zharinov/opencode-cmux.git"
   },
-  "homepage": "https://github.com/0xCaso/opencode-cmux#readme",
+  "homepage": "https://github.com/zharinov/opencode-cmux#readme",
   "bugs": {
-    "url": "https://github.com/0xCaso/opencode-cmux/issues"
+    "url": "https://github.com/zharinov/opencode-cmux/issues"
   },
   "peerDependencies": {
     "@opencode-ai/plugin": ">=1.0.0"
